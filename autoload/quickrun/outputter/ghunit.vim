@@ -15,7 +15,10 @@ function! s:outputter.finish(session)
   lclose
   if stridx(data, '** BUILD SUCCEEDED **') > 0
     " Success
-    let message = substitute(data, '\v.*(Executed .*\)\.).*', '\1', '')
+    let message = matchstr(data, 'Executed .*)\.')
+    if 0 == strlen(message)
+      let message = '** ALL GREEN **'
+    endif
     highlight GHUnitSuccess term=reverse ctermbg=darkgreen guibg=darkgreen
     echohl GHUnitSuccess | echo message | echohl None
   else
@@ -23,7 +26,10 @@ function! s:outputter.finish(session)
     try
       if data =~ '\vFile\:[^:]+Line\:'
         set errorformat=%E%.%#File:\ %f,%C%.%#Line:\ %l,%Z%.%#Reason:\ %m
-        let message = substitute(data, '\v.*(Executed .*\)\..*\FAILED *\*).*', '\1', '')
+        let message = matchstr(data, '\zsFailed tests.*\zeCommand ')
+        if 0 == strlen(message)
+          let message = '** FAILED **'
+        endif
       else
         set errorformat=%f:%l:%*[^:]:\ %m
         let message = '** BUILD FAILED **'
